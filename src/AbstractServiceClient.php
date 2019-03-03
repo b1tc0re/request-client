@@ -1,0 +1,311 @@
+<?php namespace DeftCMS\Components\b1tc0re\Request;
+
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+use DeftCMS\Engine;
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\ClientException;
+
+/**
+ * DeftCMS      AbstractServiceClient
+ *
+ * @package	    DeftCMS
+ * @category	Libraries
+ * @author	    b1tc0re
+ * @copyright   (c) 2017-2019, DeftCMS (http://deftcms.org)
+ * @since	    Version 0.0.2
+ */
+abstract class AbstractServiceClient
+{
+    /**
+     * Request schemes constants
+     */
+    const HTTPS_SCHEME = 'https';
+    const HTTP_SCHEME = 'http';
+
+    const DECODE_TYPE_JSON  = 'json';
+    const DECODE_TYPE_XML   = 'xml';
+    const DECODE_TYPE_HTML  = 'html';
+
+    const DECODE_TYPE_DEFAULT = self::DECODE_TYPE_JSON;
+
+    /**
+     * @var string
+     */
+    protected $serviceScheme = self::HTTPS_SCHEME;
+
+    /**
+     * Can be HTTP 1.0 or HTTP 1.1
+     * @var string
+     */
+    protected $serviceProtocolVersion = '1.1';
+
+    /**
+     * @var string
+     */
+    protected $serviceDomain = '';
+
+    /**
+     * @var string
+     */
+    protected $servicePort = '';
+
+    /**
+     * @var string
+     */
+    protected $proxy = '';
+
+    /**
+     * @var bool
+     */
+    protected $debug = false;
+
+    /**
+     * @var null|\GuzzleHttp\Client
+     */
+    protected $client = null;
+
+    /**
+     * @var string
+     */
+    protected $libraryName = 'DeftCMS';
+
+    /**
+     * @return string
+     */
+    public function getUserAgent()
+    {
+        return $this->libraryName . '/' . Engine::DT_VERSION;
+    }
+
+    /**
+     * @param $proxy
+     * @return $this
+     */
+    public function setProxy($proxy)
+    {
+        $this->proxy = $proxy;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProxy()
+    {
+        return $this->proxy;
+    }
+
+    /**
+     * @param $debug
+     * @return $this
+     */
+    public function setDebug($debug)
+    {
+        $this->debug = (bool) $debug;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getDebug()
+    {
+        return $this->debug;
+    }
+
+    /**
+     * @param string $serviceDomain
+     *
+     * @return self
+     */
+    public function setServiceDomain($serviceDomain)
+    {
+        $this->serviceDomain = $serviceDomain;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getServiceDomain()
+    {
+        return $this->serviceDomain;
+    }
+
+    /**
+     * @param string $servicePort
+     *
+     * @return self
+     */
+    public function setServicePort($servicePort)
+    {
+        $this->servicePort = $servicePort;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getServicePort()
+    {
+        return $this->servicePort;
+    }
+
+    /**
+     * @param string $serviceScheme
+     *
+     * @return self
+     */
+    public function setServiceScheme($serviceScheme = self::HTTPS_SCHEME)
+    {
+        $this->serviceScheme = $serviceScheme;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getServiceScheme()
+    {
+        return $this->serviceScheme;
+    }
+
+    /**
+     * @param string $resource
+     * @return string
+     */
+    protected function getServiceUrl($resource = '')
+    {
+        return $this->serviceScheme . '://' . $this->serviceDomain . '/' . $resource;
+    }
+
+
+    /**
+     * @param ClientInterface $client
+     * @return $this
+     */
+    protected function setClient(ClientInterface $client)
+    {
+        $this->client = $client;
+        return $this;
+    }
+
+    /**
+     * @return \GuzzleHttp\Client
+     */
+    protected function getClient()
+    {
+        if (is_null($this->client))
+        {
+            $defaultOptions = [
+                'base_uri' => $this->getServiceUrl(),
+                'headers' => [
+                    'Host'          => $this->getServiceDomain(),
+                    'User-Agent'    => $this->getUserAgent(),
+                    'Accept'        => '*/*'
+                ]
+            ];
+
+            if ($this->getProxy())
+            {
+                $defaultOptions['proxy'] = $this->getProxy();
+            }
+
+            if ($this->getDebug())
+            {
+                $defaultOptions['debug'] = $this->getDebug();
+            }
+
+            $this->client = new Client($defaultOptions);
+        }
+
+        return $this->client;
+    }
+
+    /**
+     * Sends a request
+     *
+     * @param string              $method  HTTP method
+     * @param string $uri         URI object or string.
+     * @param array               $options Request options to apply.
+     *
+     * @return \Psr\Http\Message\ResponseInterface
+     *
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    protected function sendRequest($method, $uri, array $options = [])
+    {
+        try
+        {
+            $response = $this->getClient()->request($method, $uri, $options);
+            return $response;
+        }
+        catch (ClientException $ex)
+        {
+            $ResponseBody = $ex->getResponse()->getBody()->getContents();
+            $code         = $ex->getResponse()->getStatusCode();
+
+            Engine::$Log->error('Service client error code '. $code . '; '.$ResponseBody);
+            Engine::$Log->error('Service client error code '. $uri);
+            throw $ex;
+        }
+    }
+
+    /**
+     * @param string $body
+     * @param string $type
+     * @return array|string|\SimpleXMLElement
+     */
+    protected function getDecodedBody($body, $type = null)
+    {
+        if (!isset($type)) {
+            $type = static::DECODE_TYPE_DEFAULT;
+        }
+
+        switch ($type)
+        {
+            case self::DECODE_TYPE_XML:
+                return simplexml_load_string((string) $body);
+            case self::DECODE_TYPE_JSON:
+                return json_decode((string) $body, true);
+            default:
+                return (string) $body;
+        }
+    }
+
+    /**
+     * Returns URL-encoded query string
+     *
+     * @note: similar to http_build_query(),
+     * but transform key=>value where key == value to "?key" param.
+     *
+     * @param array        $queryData
+     * @param string       $prefix
+     * @param string       $argSeparator
+     * @param int          $encType
+     *
+     * @return string $queryString
+     */
+    protected function buildQueryString($queryData, $prefix = '', $argSeparator = '&', $encType = PHP_QUERY_RFC3986)
+    {
+        foreach ($queryData as $k => &$v) {
+            if (!is_scalar($v)) {
+                $v = implode(',', $v);
+            }
+        }
+        $queryString = http_build_query($queryData, $prefix, $argSeparator, $encType);
+        foreach ($queryData as $k => $v) {
+            if ($k==$v) {
+                $queryString = str_replace("$k=$v", $v, $queryString);
+            }
+        }
+        return $queryString;
+    }
+}

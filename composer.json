@@ -1,0 +1,26 @@
+{
+  "name": "b1tc0re/request-client",
+  "description": "Request client library",
+  "keywords": [
+    "b1tc0re",
+    "Request client"
+  ],
+  "minimum-stability": "dev",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "b1tc0re",
+      "email": "b1tc0re@yandex.ru",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": "^7.0",
+    "guzzlehttp/guzzle": "6.3.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "DeftCMS\\Components\\b1tc0re\\Request\\": "src/"
+    }
+  }
+}
