@@ -24,11 +24,30 @@ abstract class AbstractServiceClient
     const HTTPS_SCHEME = 'https';
     const HTTP_SCHEME = 'http';
 
-    const DECODE_TYPE_JSON  = 'json';
+    /**
+     * Decode type json to object
+     */
+    const DECODE_TYPE_JSON_OBJECT  = 'object';
+
+    /**
+     * Decode type json to array
+     */
+    const DECODE_TYPE_JSON_ARRAY  = 'array';
+
+    /**
+     * Decode type json to xml
+     */
     const DECODE_TYPE_XML   = 'xml';
+
+    /**
+     * Decode type json to html
+     */
     const DECODE_TYPE_HTML  = 'html';
 
-    const DECODE_TYPE_DEFAULT = self::DECODE_TYPE_JSON;
+    /**
+     * Default decode response type
+     */
+    const DECODE_TYPE_DEFAULT = self::DECODE_TYPE_JSON_ARRAY;
 
     /**
      * @var string
@@ -188,6 +207,8 @@ abstract class AbstractServiceClient
 
 
     /**
+     * Set client
+     *
      * @param ClientInterface $client
      * @return $this
      */
@@ -198,7 +219,8 @@ abstract class AbstractServiceClient
     }
 
     /**
-     * @return \GuzzleHttp\Client
+     * Return http client
+     * @return ClientInterface
      */
     protected function getClient()
     {
@@ -273,8 +295,10 @@ abstract class AbstractServiceClient
         {
             case self::DECODE_TYPE_XML:
                 return simplexml_load_string((string) $body);
-            case self::DECODE_TYPE_JSON:
+            case self::DECODE_TYPE_JSON_OBJECT:
                 return json_decode((string) $body, true);
+            case self::DECODE_TYPE_JSON_ARRAY:
+                return json_decode((string) $body);
             default:
                 return (string) $body;
         }
