@@ -296,9 +296,9 @@ abstract class AbstractServiceClient
             case self::DECODE_TYPE_XML:
                 return simplexml_load_string((string) $body);
             case self::DECODE_TYPE_JSON_OBJECT:
-                return json_decode((string) $body, true);
-            case self::DECODE_TYPE_JSON_ARRAY:
                 return json_decode((string) $body);
+            case self::DECODE_TYPE_JSON_ARRAY:
+                return json_decode((string) $body, true);
             default:
                 return (string) $body;
         }
