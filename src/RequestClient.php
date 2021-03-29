@@ -30,7 +30,7 @@ class RequestClient extends AbstractServiceClient
         if( strtolower($method) == 'post' ) {
             $options['form_params'] = $params;
         }
-        elseif( strtolower($method) == 'get' ) {
+        elseif( strtolower($method) == 'get' && count($params) ) {
             $resource .= '?' . $this->buildQueryString($params);
         }
 
