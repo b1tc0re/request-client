@@ -1,6 +1,8 @@
 <?php namespace DeftCMS\Components\b1tc0re\Request;
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+use GuzzleHttp\Exception\GuzzleException;
+
+defined('BASEPATH') || exit('No direct script access allowed');
 
 /**
  * DeftCMS      Request Client http request
@@ -8,8 +10,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @package	    DeftCMS
  * @category	Libraries
  * @author	    b1tc0re
- * @copyright   (c) 2017-2019, DeftCMS (http://deftcms.org)
- * @since	    Version 0.0.2
+ * @copyright   (c) 2017-2022, DeftCMS (http://deftcms.ru/)
+ * @since	    Version 0.0.9a
  */
 class RequestClient extends AbstractServiceClient
 {
@@ -21,22 +23,22 @@ class RequestClient extends AbstractServiceClient
      * @param  array $params
      * @return array
      *
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     protected function getServiceResponse($resource, $method = 'GET', $params = [])
     {
         $options = [];
 
-        if( strtolower($method) == 'post' ) {
+        if( strtolower($method) === 'post' ) {
             $options['form_params'] = $params;
         }
-        elseif( strtolower($method) == 'get' && count($params) ) {
+        elseif( strtolower($method) === 'get' && count($params) ) {
             $resource .= '?' . $this->buildQueryString($params);
         }
 
         $resource = $this->getServiceUrl($resource);
         $response = $this->sendRequest($method, $resource, $options);
-        $decodedResponseBody = $this->getDecodedBody($response->getBody()->getContents());
-        return $decodedResponseBody;
+
+        return $this->getDecodedBody($response->getBody()->getContents());
     }
 }

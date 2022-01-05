@@ -1,8 +1,7 @@
 <?php namespace DeftCMS\Components\b1tc0re\Request;
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') || exit('No direct script access allowed');
 
-use DeftCMS\Engine;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
@@ -13,8 +12,8 @@ use GuzzleHttp\Exception\ClientException;
  * @package	    DeftCMS
  * @category	Libraries
  * @author	    b1tc0re
- * @copyright   (c) 2017-2019, DeftCMS (http://deftcms.org)
- * @since	    Version 0.0.2
+ * @copyright   (c) 2017-2022, DeftCMS (http://deftcms.ru/)
+ * @since	    Version 0.0.9a
  */
 abstract class AbstractServiceClient
 {
@@ -81,7 +80,7 @@ abstract class AbstractServiceClient
     protected $debug = false;
 
     /**
-     * @var null|\GuzzleHttp\Client
+     * @var null|Client
      */
     protected $client = null;
 
@@ -95,7 +94,13 @@ abstract class AbstractServiceClient
      */
     public function getUserAgent()
     {
-        return $this->libraryName . '/' . Engine::DT_VERSION;
+        $version = '0.0.9';
+
+        if( class_exists('DeftCMS\Engine', false) ) {
+            $version = DeftCMS\Engine::DT_VERSION;
+        }
+
+        return $this->libraryName . '/' . $version;
     }
 
     /**
@@ -266,16 +271,23 @@ abstract class AbstractServiceClient
     {
         try
         {
-            $response = $this->getClient()->request($method, $uri, $options);
-            return $response;
+            return $this->getClient()->request($method, $uri, $options);
         }
         catch (ClientException $ex)
         {
-            $ResponseBody = $ex->getResponse()->getBody()->getContents();
-            $code         = $ex->getResponse()->getStatusCode();
+            $response     = $ex->getResponse();
+            $ResponseBody = 'body:empty';
+            $code         = "code:empty";
 
-            Engine::$Log->error('Service client error code '. $code . '; '.$ResponseBody);
-            Engine::$Log->error('Service client error code '. $uri);
+            if( $response !== null )
+            {
+                $ResponseBody = $response->getBody()->getContents();
+                $code         = $response->getStatusCode();
+            }
+
+
+            DeftCMS\Engine::$Log->error('Service client error code '. $code . '; '.$ResponseBody);
+            DeftCMS\Engine::$Log->error('Service client error code '. $uri);
             throw $ex;
         }
     }
