@@ -97,7 +97,7 @@ abstract class AbstractServiceClient
         $version = '0.0.9';
 
         if( class_exists('DeftCMS\Engine', false) ) {
-            $version = DeftCMS\Engine::DT_VERSION;
+            $version = \DeftCMS\Engine::DT_VERSION;
         }
 
         return $this->libraryName . '/' . $version;
@@ -286,8 +286,8 @@ abstract class AbstractServiceClient
             }
 
 
-            DeftCMS\Engine::$Log->error('Service client error code '. $code . '; '.$ResponseBody);
-            DeftCMS\Engine::$Log->error('Service client error code '. $uri);
+            \DeftCMS\Engine::$Log->error('Service client error code '. $code . '; '.$ResponseBody);
+            \DeftCMS\Engine::$Log->error('Service client error code '. $uri);
             throw $ex;
         }
     }
