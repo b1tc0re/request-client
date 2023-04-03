@@ -74,10 +74,9 @@ abstract class ServiceClient
 
     /**
      * Cookies container
-     * @var CookieJarInterface
+     * @var null|CookieJarInterface
      */
-    private $guzzleCookies;
-
+    private $guzzleCookies = null;
 
     /**
      * Cookies container
@@ -173,7 +172,6 @@ abstract class ServiceClient
         return $this->serviceScheme . '://' . $this->serviceDomain . '/' . $resource;
     }
 
-
     /**
      * Get http client
      * @param array $options Guzzle configure options
@@ -203,7 +201,7 @@ abstract class ServiceClient
             }
 
             if( is_string($this->getCookieJar()) && is_dir($this->getCookieJar()) ) {
-                $defaultOptions[RequestOptions::COOKIES] = $this->guzzleCookies = $this->getGuzzleFileCookie();
+                $defaultOptions[RequestOptions::COOKIES] = $this->guzzleCookies = $this->createGuzzleFileCookie();
             }
 
             $this->guzzleClient = new Client(array_merge($defaultOptions, $options));
@@ -230,7 +228,6 @@ abstract class ServiceClient
             ];
 
             $headers = [
-                //'Host'          => $this->getServiceDomain(),
                 'User-Agent'    => $this->getUserAgent(),
                 'Accept'            => '*/*',
                 'Accept-Encoding'   => 'gzip, deflate'
@@ -270,19 +267,18 @@ abstract class ServiceClient
     }
 
     /**
-     * @param $method
-     * @param $resource
-     * @param array $options
-     * @return array[
-     * response => \Psr\Http\Message\ResponseInterface
-     * ]
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @return CookieJarInterface
      */
+    protected function getGuzzleCookieJar()
+    {
+        return $this->guzzleCookies;
+    }
 
     /**
-     * @param $method
-     * @param $resource
-     * @param array $options
+     * Send request
+     * @param string $method    Request method POST,GET,PUT ...
+     * @param string $resource  Resource path
+     * @param array $options    Request options
      * @return mixed|\Psr\Http\Message\ResponseInterface
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
@@ -349,7 +345,7 @@ abstract class ServiceClient
 
         if( is_string($this->getCookieJar()) && is_dir($this->getCookieJar()) )
         {
-           $guzzle = $this->getGuzzleFileCookie();
+           $guzzle = $this->createGuzzleFileCookie();
 
            foreach ($guzzle->toArray() as $cookie)
            {
@@ -381,7 +377,7 @@ abstract class ServiceClient
 
         if( is_string($this->getCookieJar()) && is_dir($this->getCookieJar()) )
         {
-            $guzzle = $this->getGuzzleFileCookie();
+            $guzzle = $this->createGuzzleFileCookie();
 
             foreach ($this->request2Cookies->getAll() as $cookie)
             {
@@ -402,7 +398,7 @@ abstract class ServiceClient
      * Return configured cookie
      * @return FileCookieJar
      */
-    protected function getGuzzleFileCookie()
+    protected function createGuzzleFileCookie()
     {
        return new FileCookieJar(fn_path_join( $this->cookieJar, $this->getServiceDomain() . '.cook'), true);
     }
